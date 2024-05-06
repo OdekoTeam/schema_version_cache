@@ -1,0 +1,23 @@
+platform: linux
+image_resource:
+  type: registry-image
+  source:
+    repository: alpine/git
+inputs:
+- name: repo
+outputs:
+- name: repo-version
+run:
+  path: /bin/sh
+  args:
+  - -c
+  - |
+    # exit on error
+    set -e
+
+    echo "Getting version from schema_version_cache.gemspec"
+    VERSION=$(awk '/^ +\w+\.version *= *\S+$/ { print $NF }' schema_version_cache.gemspec | tr -d "\"'")
+
+    echo "Found version ${VERSION}"
+    mkdir -p repo-version
+    echo ${VERSION} > repo-version/VERSION
