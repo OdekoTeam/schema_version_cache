@@ -2,4 +2,6 @@
 
 set -euxo pipefail
 
+bundle exec tapioca gem --verify
+
 bundle exec rspec

@@ -67,3 +67,9 @@ Run the linter:
 ```console
 $ bin/lint
 ```
+
+Note that we have a development dependency on sorbet for static type-checking,
+and we declare a public interface RBI file in the `rbi/` directory to aid with
+type-checking in projects that use this gem. We avoid placing type annotations
+directly in `lib/schema_version_cache.rb` or enabling runtime type-checking.
+This allows applications to use our gem regardless of whether they use sorbet.
