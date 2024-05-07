@@ -125,8 +125,8 @@ jobs:
     attempts: 3
   - put: repo-release
     params:
-      name: repo/VERSION
-      tag: repo/VERSION
+      name: repo-version/VERSION
+      tag: repo-version/VERSION
     attempts: 3
   on_failure: *simple_failure
   on_success:
