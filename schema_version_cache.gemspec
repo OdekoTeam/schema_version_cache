@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.authors = ["Odeko"]
   s.files = Dir.chdir(__dir__) do
     `git ls-files -z`.split("\x0").reject do |f|
-      (f == __FILE__) || f.match(%r{\A(?:(?:bin|spec|ci|sorbet)/|\.(?:git))})
+      (f == __FILE__) || f.match(%r{\A(?:(?:bin|spec|ci|sorbet)/|\.(?:git)|(?:Gemfile\.lock))})
     end
   end
   s.license = "Nonstandard"
