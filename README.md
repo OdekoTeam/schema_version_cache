@@ -1,5 +1,7 @@
 # SchemaVersionCache
 
+[![concourse.odeko.com](https://concourse.odeko.com/api/v1/teams/main/pipelines/schema-version-cache-main/jobs/test/badge)](https://concourse.odeko.com/teams/main/pipelines/schema-version-cache-main)
+
 Make Avro schema version queries fast and easy.
 
 ## Installation
