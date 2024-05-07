@@ -1,3 +1,5 @@
+# typed: true
+
 class SchemaVersionCache
   SchemaNotFound = Class.new(StandardError)
   SubjectLookupError = Class.new(StandardError)
