@@ -7,7 +7,8 @@ class SchemaVersionCache
   # Registry is expected to provide the following methods:
   # - subject_versions: Given a subject, return an array of version numbers.
   # - subject_version: Given a subject and version number, return a hash of
-  #   schema data including schema ID under key "id".
+  #   schema data including schema ID under key "id" and schema JSON string
+  #   under key "schema".
   #
   # In practice, we use AvroTurf::ConfluentSchemaRegistry, but for flexibility
   # and ease of testing, any object providing the necessary methods will work.
@@ -48,15 +49,25 @@ class SchemaVersionCache
     @by_id.fetch(subject, {}).keys.max || schema_not_found(subject:)
   end
 
+  def get_schema_json(subject:, version:)
+    if @by_version.key?(subject) && @by_version.fetch(subject).key?(version)
+      return @by_version.fetch(subject).fetch(version).schema
+    end
+
+    add_subject_to_cache(subject)
+    @by_version.dig(subject, version)&.schema || schema_not_found(subject:, version:)
+  end
+
   private
 
-  Entry = Struct.new(:subject, :version, :id, keyword_init: true)
+  Entry = Struct.new(:subject, :version, :id, :schema, keyword_init: true)
 
   def add_subject_to_cache(subject)
     entries = @registry.subject_versions(subject).sort.map do |version|
       data = @registry.subject_version(subject, version)
       id = data.fetch("id")
-      Entry.new(subject:, version:, id:)
+      schema = data.fetch("schema")
+      Entry.new(subject:, version:, id:, schema:)
     end
 
     @by_version[subject] = entries.reduce({}) do |hash, entry|
