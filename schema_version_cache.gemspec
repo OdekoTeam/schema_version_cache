@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "schema_version_cache"
-  s.version = "1.3.0"
+  s.version = "1.3.1"
   s.summary = "Schema version cache"
   s.description = "Schema version cache, e.g. for Avro schemas"
   s.homepage = "https://github.com/OdekoTeam/schema_version_cache"
