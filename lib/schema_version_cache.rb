@@ -13,39 +13,48 @@ class SchemaVersionCache
   # and ease of testing, any object providing the necessary methods will work.
   def initialize(registry)
     @registry = registry
-    @cache = {} # Hash[Subject, Hash[SchemaId, VersionNumber]]
+    @by_version = {}
+    @by_id = {}
   end
 
   def preload(subjects)
-    subjects.each { |subject| add_subject_versions_to_cache(subject) }
+    subjects.each { |subject| add_subject_to_cache(subject) }
   end
 
   def get_version_number(subject:, schema_id:)
-    if @cache.key?(subject) && @cache.fetch(subject).key?(schema_id)
-      return @cache.fetch(subject).fetch(schema_id)
+    if @by_id.key?(subject) && @by_id.fetch(subject).key?(schema_id)
+      return @by_id.fetch(subject).fetch(schema_id).version
     end
 
-    add_subject_versions_to_cache(subject)
-    @cache.dig(subject, schema_id) || schema_not_found(subject:, schema_id:)
+    add_subject_to_cache(subject)
+    @by_id.dig(subject, schema_id)&.version || schema_not_found(subject:, schema_id:)
   end
 
   def get_current_id(subject:)
-    if @cache.key?(subject) && @cache.fetch(subject).keys.any?
-      return @cache.fetch(subject).keys.max
+    if @by_id.key?(subject) && @by_id.fetch(subject).keys.any?
+      return @by_id.fetch(subject).keys.max
     end
 
-    add_subject_versions_to_cache(subject)
-    @cache.fetch(subject, {}).keys.max || schema_not_found(subject:)
+    add_subject_to_cache(subject)
+    @by_id.fetch(subject, {}).keys.max || schema_not_found(subject:)
   end
 
   private
 
-  def add_subject_versions_to_cache(subject)
-    version_numbers = @registry.subject_versions(subject)
-    @cache[subject] = version_numbers.reduce({}) do |hash, version_number|
-      schema_data = @registry.subject_version(subject, version_number)
-      schema_id = schema_data.fetch("id")
-      hash.merge!(schema_id => version_number)
+  Entry = Struct.new(:subject, :version, :id, keyword_init: true)
+
+  def add_subject_to_cache(subject)
+    entries = @registry.subject_versions(subject).sort.map do |version|
+      data = @registry.subject_version(subject, version)
+      id = data.fetch("id")
+      Entry.new(subject:, version:, id:)
+    end
+
+    @by_version[subject] = entries.reduce({}) do |hash, entry|
+      hash.merge!(entry.version => entry)
+    end
+    @by_id[subject] = entries.reduce({}) do |hash, entry|
+      hash.merge!(entry.id => entry)
     end
   rescue => e
     raise SubjectLookupError, <<~ERR.chomp

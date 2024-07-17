@@ -17,7 +17,7 @@ class SchemaVersionCache
   def get_current_id(subject:); end
 
   sig { params(subject: String).void }
-  def add_subject_versions_to_cache(subject); end
+  def add_subject_to_cache(subject); end
 
   sig { params(attributes: T.untyped).returns(T.noreturn) }
   def schema_not_found(**attributes); end
