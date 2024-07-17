@@ -21,6 +21,15 @@ class SchemaVersionCache
     subjects.each { |subject| add_subject_to_cache(subject) }
   end
 
+  def get_version_numbers(subject:)
+    if @by_version.key?(subject) && @by_version.fetch(subject).keys.any?
+      return @by_version.fetch(subject).keys
+    end
+
+    add_subject_to_cache(subject)
+    @by_version.fetch(subject, {}).keys
+  end
+
   def get_version_number(subject:, schema_id:)
     if @by_id.key?(subject) && @by_id.fetch(subject).key?(schema_id)
       return @by_id.fetch(subject).fetch(schema_id).version

@@ -36,6 +36,37 @@ describe SchemaVersionCache do
     described_class.new(TestRegistry.new(registry_data))
   end
 
+  describe "#get_version_numbers" do
+    let(:data_lists) do
+      registry_data.map do |subject, data|
+        version_numbers = data.keys.sort
+        [subject, version_numbers]
+      end
+    end
+
+    it "returns version numbers" do
+      data_lists.each do |subject, version_numbers|
+        expect(instance.get_version_numbers(subject:)).to eq(version_numbers)
+      end
+    end
+
+    it "uses cache when possible" do
+      data_lists.each do |subject, version_numbers|
+        instance.get_version_numbers(subject:)
+      end
+      registry_data.keys.each { |subject| registry_data.delete(subject) }
+
+      data_lists.each do |subject, version_numbers|
+        expect(instance.get_version_numbers(subject:)).to eq(version_numbers)
+      end
+    end
+
+    it "raises an error if subject cannot be found" do
+      expect { instance.get_version_numbers(subject: "fnord") }
+        .to raise_error(described_class::SubjectLookupError)
+    end
+  end
+
   describe "#get_version_number" do
     let(:data_lists) do
       registry_data.flat_map do |subject, data|

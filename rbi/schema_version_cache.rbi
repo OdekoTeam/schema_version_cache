@@ -10,6 +10,9 @@ class SchemaVersionCache
   sig { params(subjects: T::Array[String]).void }
   def preload(subjects); end
 
+  sig { params(subject: String).returns(T::Array[Integer]) }
+  def get_version_numbers(subject:); end
+
   sig { params(subject: String, schema_id: Integer).returns(Integer) }
   def get_version_number(subject:, schema_id:); end
 
