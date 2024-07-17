@@ -107,7 +107,7 @@ jobs:
   - task: version-check
     file: concourse/tasks/rails/version-check/default.yml
     params:
-      GATED_JOB: schema-version-cache/gem-publish
+      GATED_JOB: schema-version-cache-main/gem-publish
     attempts: 3
 - name: gem-publish
   serial: true
