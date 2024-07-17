@@ -10,14 +10,23 @@ class SchemaVersionCache
   sig { params(subjects: T::Array[String]).void }
   def preload(subjects); end
 
+  sig { params(subject: String).returns(T::Array[Integer]) }
+  def get_version_numbers(subject:); end
+
   sig { params(subject: String, schema_id: Integer).returns(Integer) }
   def get_version_number(subject:, schema_id:); end
 
   sig { params(subject: String).returns(Integer) }
   def get_current_id(subject:); end
 
+  sig { params(subject: String, version: Integer).returns(Integer) }
+  def get_schema_id(subject:, version:); end
+
+  sig { params(subject: String, version: Integer).returns(String) }
+  def get_schema_json(subject:, version:); end
+
   sig { params(subject: String).void }
-  def add_subject_versions_to_cache(subject); end
+  def add_subject_to_cache(subject); end
 
   sig { params(attributes: T.untyped).returns(T.noreturn) }
   def schema_not_found(**attributes); end

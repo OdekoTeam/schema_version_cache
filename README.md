@@ -46,7 +46,9 @@ Run schema queries as needed:
 ```ruby
 subject = "com.odeko.foo_service.Foo_value"
 schema_id = AvroSchemaVersionCache.get_current_id(subject:)
-version_number = AvroSchemaVersionCache.get_version_number(subject:, schema_id:)
+version = AvroSchemaVersionCache.get_version_number(subject:, schema_id:)
+schema_json = AvroSchemaVersionCache.get_schema_json(subject:, version:)
+versions = AvroSchemaVersionCache.get_version_numbers(subject:)
 ```
 
 ## Development
