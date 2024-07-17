@@ -130,6 +130,41 @@ describe SchemaVersionCache do
     end
   end
 
+  describe "#get_schema_id" do
+    let(:data_lists) do
+      registry_data.flat_map do |subject, data|
+        data.map do |version, val|
+          [subject, version, val["id"]]
+        end
+      end
+    end
+
+    it "returns version number" do
+      data_lists.each do |subject, version, id|
+        expect(instance.get_schema_id(subject:, version:)).to eq(id)
+      end
+    end
+
+    it "uses cache when possible" do
+      data_lists.each do |subject, version, id|
+        instance.get_schema_id(subject:, version:)
+      end
+      registry_data.keys.each { |subject| registry_data.delete(subject) }
+
+      data_lists.each do |subject, version, id|
+        expect(instance.get_schema_id(subject:, version:)).to eq(id)
+      end
+    end
+
+    it "raises an error if schema cannot be found" do
+      expect { instance.get_schema_id(subject: "quack", version: 1) }
+        .to raise_error(described_class::SubjectLookupError)
+
+      expect { instance.get_schema_id(subject: "foo", version: 2000) }
+        .to raise_error(described_class::SchemaNotFound)
+    end
+  end
+
   describe "#get_schema_json" do
     let(:data_lists) do
       registry_data.flat_map do |subject, data|

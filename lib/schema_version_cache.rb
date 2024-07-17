@@ -49,6 +49,15 @@ class SchemaVersionCache
     @by_id.fetch(subject, {}).keys.max || schema_not_found(subject:)
   end
 
+  def get_schema_id(subject:, version:)
+    if @by_version.key?(subject) && @by_version.fetch(subject).key?(version)
+      return @by_version.fetch(subject).fetch(version).id
+    end
+
+    add_subject_to_cache(subject)
+    @by_version.dig(subject, version)&.id || schema_not_found(subject:, version:)
+  end
+
   def get_schema_json(subject:, version:)
     if @by_version.key?(subject) && @by_version.fetch(subject).key?(version)
       return @by_version.fetch(subject).fetch(version).schema

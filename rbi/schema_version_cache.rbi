@@ -19,6 +19,9 @@ class SchemaVersionCache
   sig { params(subject: String).returns(Integer) }
   def get_current_id(subject:); end
 
+  sig { params(subject: String, version: Integer).returns(Integer) }
+  def get_schema_id(subject:, version:); end
+
   sig { params(subject: String, version: Integer).returns(String) }
   def get_schema_json(subject:, version:); end
 
