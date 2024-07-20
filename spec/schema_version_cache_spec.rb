@@ -174,7 +174,7 @@ describe SchemaVersionCache do
       end
     end
 
-    it "returns version number" do
+    it "returns schema json" do
       data_lists.each do |subject, version, schema|
         expect(instance.get_schema_json(subject:, version:)).to eq(schema)
       end
