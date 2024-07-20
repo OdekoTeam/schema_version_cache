@@ -1,4 +1,5 @@
 require "schema_version_cache"
+require "json"
 
 class TestRegistry
   def initialize(data)
@@ -15,20 +16,80 @@ class TestRegistry
 end
 
 describe SchemaVersionCache do
+  let(:foo_schema_v1) do
+    JSON.generate(
+      "type" => "record",
+      "name" => "Foo",
+      "doc" => "Foo1",
+      "fields" => [
+        {"name" => "fooInt", "type" => "int"}
+      ]
+    )
+  end
+  let(:foo_schema_v2) do
+    JSON.generate(
+      "type" => "record",
+      "name" => "Foo",
+      "doc" => "Foo2",
+      "fields" => [
+        {"name" => "fooInt", "type" => "int"},
+        {"name" => "fooString", "type" => "string"}
+      ]
+    )
+  end
+  let(:foo_schema_v3) do
+    JSON.generate(
+      "type" => "record",
+      "name" => "Foo",
+      "doc" => "Foo3",
+      "fields" => [
+        {"name" => "fooInt", "type" => "int"},
+        {"name" => "fooString", "type" => "string", "doc" => "A"}
+      ]
+    )
+  end
+  let(:foo_schema_v4) do
+    JSON.generate(
+      "type" => "record",
+      "name" => "Foo",
+      "doc" => "Foo4",
+      "fields" => [
+        {"name" => "fooInt", "type" => "int"},
+        {"name" => "fooString", "type" => "string", "doc" => "B"},
+        {"name" => "fooLong", "type" => "long"}
+      ]
+    )
+  end
+
+  let(:bar_schema_v1) do
+    JSON.generate("type" => "string", "doc" => "Bar1")
+  end
+  let(:bar_schema_v2) do
+    JSON.generate("type" => "string", "doc" => "Bar2")
+  end
+
+  let(:baz_schema_v1) do
+    JSON.generate("type" => "string", "doc" => "Baz1")
+  end
+  let(:baz_schema_v2) do
+    JSON.generate("type" => "string", "doc" => "Baz2")
+  end
+
   let(:registry_data) do
     {
       "foo" => {
-        1 => {"id" => 1000, "schema" => "{\"type\":\"string\",\"doc\":\"A\"}"},
-        2 => {"id" => 1001, "schema" => "{\"type\":\"string\",\"doc\":\"B\"}"},
-        3 => {"id" => 1002, "schema" => "{\"type\":\"string\",\"doc\":\"C\"}"}
+        1 => {"id" => 1000, "schema" => foo_schema_v1},
+        2 => {"id" => 1001, "schema" => foo_schema_v2},
+        3 => {"id" => 1002, "schema" => foo_schema_v3},
+        4 => {"id" => 1003, "schema" => foo_schema_v4}
       },
       "bar" => {
-        1 => {"id" => 2000, "schema" => "{\"type\":\"string\",\"doc\":\"O\"}"},
-        2 => {"id" => 2001, "schema" => "{\"type\":\"string\",\"doc\":\"P\"}"}
+        1 => {"id" => 2000, "schema" => bar_schema_v2},
+        2 => {"id" => 2001, "schema" => bar_schema_v2}
       },
       "baz" => {
-        1 => {"id" => 3000, "schema" => "{\"type\":\"string\",\"doc\":\"W\"}"},
-        2 => {"id" => 3001, "schema" => "{\"type\":\"string\",\"doc\":\"X\"}"}
+        1 => {"id" => 3000, "schema" => baz_schema_v2},
+        2 => {"id" => 3001, "schema" => baz_schema_v2}
       }
     }
   end
@@ -212,7 +273,7 @@ describe SchemaVersionCache do
       instance.preload(["foo", "bar"])
       registry_data.keys.each { |subject| registry_data.delete(subject) }
 
-      expect(instance.get_current_id(subject: "foo")).to eq(1002)
+      expect(instance.get_current_id(subject: "foo")).to eq(1003)
       expect(instance.get_current_id(subject: "bar")).to eq(2001)
       expect { instance.get_current_id(subject: "baz") }
         .to raise_error(described_class::SubjectLookupError)
