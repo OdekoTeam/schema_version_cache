@@ -261,6 +261,94 @@ describe SchemaVersionCache do
     end
   end
 
+  describe "#find_compatible_version" do
+    it "finds the newest compatible version for the given data" do
+      expect(
+        instance.find_compatible_version(
+          subject: "bar",
+          data: "abc"
+        )
+      ).to eq(2)
+
+      expect(
+        instance.find_compatible_version(
+          subject: "foo",
+          data: {fooInt: 123}
+        )
+      ).to eq(1)
+
+      expect(
+        instance.find_compatible_version(
+          subject: "foo",
+          data: {fooInt: 123, fooString: "xyz"}
+        )
+      ).to eq(3)
+
+      expect(
+        instance.find_compatible_version(
+          subject: "foo",
+          data: {fooInt: 123, fooString: "xyz", fooLong: 99999}
+        )
+      ).to eq(4)
+    end
+
+    it "uses cache when possible" do
+      instance.find_compatible_version(subject: "bar", data: "abc")
+
+      registry_data.delete("bar")
+
+      expect(
+        instance.find_compatible_version(subject: "bar", data: "abc")
+      ).to eq(2)
+    end
+
+    it "refetches from upstream when necessary" do
+      instance.find_compatible_version(
+        subject: "foo",
+        data: {fooInt: 123, fooString: "xyz", fooLong: 99999}
+      )
+
+      foo_schema_v5 = JSON.generate(
+        "type" => "record",
+        "name" => "Foo",
+        "doc" => "Foo5",
+        "fields" => [
+          {"name" => "fooInt", "type" => "int"},
+          {"name" => "fooString", "type" => "string", "doc" => "B"},
+          {"name" => "fooLong", "type" => "long"},
+          {"name" => "fooBoolean", "type" => "boolean"}
+        ]
+      )
+      registry_data["foo"][5] = {"id" => 10004, "schema" => foo_schema_v5}
+
+      expect(
+        instance.find_compatible_version(
+          subject: "foo",
+          data: {fooInt: 123, fooString: "xyz", fooLong: 99999, fooBoolean: true}
+        )
+      ).to eq(5)
+    end
+
+    it "raises an error if no compatible version can be found" do
+      expect { instance.find_compatible_version(subject: "quack", data: "x") }
+        .to raise_error(described_class::SubjectLookupError)
+
+      expect { instance.find_compatible_version(subject: "foo", data: "y") }
+        .to raise_error(described_class::SchemaNotFound)
+    end
+
+    it "accepts a custom schema_parser and validator" do
+      expect(
+        instance.find_compatible_version(
+          subject: "foo",
+          data: {findDoc: "Foo3"},
+          schema_parser: ->(string) { JSON.parse(string) },
+          validator: ->(schema, data) { schema["doc"] == data[:findDoc] }
+        )
+      ).to eq(3)
+    end
+  end
+
   describe "#preload" do
     let(:data_lists) do
       registry_data.map do |subject, data|
