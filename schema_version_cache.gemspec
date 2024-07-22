@@ -5,9 +5,7 @@ Gem::Specification.new do |s|
   s.description = "Schema version cache, e.g. for Avro schemas"
   s.authors = ["Odeko"]
   s.files = Dir.chdir(__dir__) do
-    `git ls-files -z`.split("\x0").reject do |f|
-      (f == __FILE__) || f.match(%r{\A(?:(?:bin|spec|ci|sorbet)/|\.(?:git)|(?:Gemfile\.lock))})
-    end
+    Dir["README.md", "lib/**/*.rb", "rbi/**/*.rbi"]
   end
   s.license = "Nonstandard"
   s.add_dependency("avro", "~> 1.11")
