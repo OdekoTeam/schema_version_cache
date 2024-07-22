@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    schema_version_cache (1.2.0)
+    schema_version_cache (1.2.1)
       avro (~> 1.11)
 
 GEM
