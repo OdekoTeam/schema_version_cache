@@ -1,4 +1,5 @@
 require "schema_version_cache"
+require "json"
 
 class TestRegistry
   def initialize(data)
@@ -15,20 +16,80 @@ class TestRegistry
 end
 
 describe SchemaVersionCache do
+  let(:foo_schema_v1) do
+    JSON.generate(
+      "type" => "record",
+      "name" => "Foo",
+      "doc" => "Foo1",
+      "fields" => [
+        {"name" => "fooInt", "type" => "int"}
+      ]
+    )
+  end
+  let(:foo_schema_v2) do
+    JSON.generate(
+      "type" => "record",
+      "name" => "Foo",
+      "doc" => "Foo2",
+      "fields" => [
+        {"name" => "fooInt", "type" => "int"},
+        {"name" => "fooString", "type" => "string"}
+      ]
+    )
+  end
+  let(:foo_schema_v3) do
+    JSON.generate(
+      "type" => "record",
+      "name" => "Foo",
+      "doc" => "Foo3",
+      "fields" => [
+        {"name" => "fooInt", "type" => "int"},
+        {"name" => "fooString", "type" => "string", "doc" => "A"}
+      ]
+    )
+  end
+  let(:foo_schema_v4) do
+    JSON.generate(
+      "type" => "record",
+      "name" => "Foo",
+      "doc" => "Foo4",
+      "fields" => [
+        {"name" => "fooInt", "type" => "int"},
+        {"name" => "fooString", "type" => "string", "doc" => "B"},
+        {"name" => "fooLong", "type" => "long"}
+      ]
+    )
+  end
+
+  let(:bar_schema_v1) do
+    JSON.generate("type" => "string", "doc" => "Bar1")
+  end
+  let(:bar_schema_v2) do
+    JSON.generate("type" => "string", "doc" => "Bar2")
+  end
+
+  let(:baz_schema_v1) do
+    JSON.generate("type" => "string", "doc" => "Baz1")
+  end
+  let(:baz_schema_v2) do
+    JSON.generate("type" => "string", "doc" => "Baz2")
+  end
+
   let(:registry_data) do
     {
       "foo" => {
-        1 => {"id" => 1000, "schema" => "{\"type\":\"string\",\"doc\":\"A\"}"},
-        2 => {"id" => 1001, "schema" => "{\"type\":\"string\",\"doc\":\"B\"}"},
-        3 => {"id" => 1002, "schema" => "{\"type\":\"string\",\"doc\":\"C\"}"}
+        1 => {"id" => 1000, "schema" => foo_schema_v1},
+        2 => {"id" => 1001, "schema" => foo_schema_v2},
+        3 => {"id" => 1002, "schema" => foo_schema_v3},
+        4 => {"id" => 1003, "schema" => foo_schema_v4}
       },
       "bar" => {
-        1 => {"id" => 2000, "schema" => "{\"type\":\"string\",\"doc\":\"O\"}"},
-        2 => {"id" => 2001, "schema" => "{\"type\":\"string\",\"doc\":\"P\"}"}
+        1 => {"id" => 2000, "schema" => bar_schema_v2},
+        2 => {"id" => 2001, "schema" => bar_schema_v2}
       },
       "baz" => {
-        1 => {"id" => 3000, "schema" => "{\"type\":\"string\",\"doc\":\"W\"}"},
-        2 => {"id" => 3001, "schema" => "{\"type\":\"string\",\"doc\":\"X\"}"}
+        1 => {"id" => 3000, "schema" => baz_schema_v2},
+        2 => {"id" => 3001, "schema" => baz_schema_v2}
       }
     }
   end
@@ -174,7 +235,7 @@ describe SchemaVersionCache do
       end
     end
 
-    it "returns version number" do
+    it "returns schema json" do
       data_lists.each do |subject, version, schema|
         expect(instance.get_schema_json(subject:, version:)).to eq(schema)
       end
@@ -200,6 +261,94 @@ describe SchemaVersionCache do
     end
   end
 
+  describe "#find_compatible_version" do
+    it "finds the newest compatible version for the given data" do
+      expect(
+        instance.find_compatible_version(
+          subject: "bar",
+          data: "abc"
+        )
+      ).to eq(2)
+
+      expect(
+        instance.find_compatible_version(
+          subject: "foo",
+          data: {fooInt: 123}
+        )
+      ).to eq(1)
+
+      expect(
+        instance.find_compatible_version(
+          subject: "foo",
+          data: {fooInt: 123, fooString: "xyz"}
+        )
+      ).to eq(3)
+
+      expect(
+        instance.find_compatible_version(
+          subject: "foo",
+          data: {fooInt: 123, fooString: "xyz", fooLong: 99999}
+        )
+      ).to eq(4)
+    end
+
+    it "uses cache when possible" do
+      instance.find_compatible_version(subject: "bar", data: "abc")
+
+      registry_data.delete("bar")
+
+      expect(
+        instance.find_compatible_version(subject: "bar", data: "abc")
+      ).to eq(2)
+    end
+
+    it "refetches from upstream when necessary" do
+      instance.find_compatible_version(
+        subject: "foo",
+        data: {fooInt: 123, fooString: "xyz", fooLong: 99999}
+      )
+
+      foo_schema_v5 = JSON.generate(
+        "type" => "record",
+        "name" => "Foo",
+        "doc" => "Foo5",
+        "fields" => [
+          {"name" => "fooInt", "type" => "int"},
+          {"name" => "fooString", "type" => "string", "doc" => "B"},
+          {"name" => "fooLong", "type" => "long"},
+          {"name" => "fooBoolean", "type" => "boolean"}
+        ]
+      )
+      registry_data["foo"][5] = {"id" => 10004, "schema" => foo_schema_v5}
+
+      expect(
+        instance.find_compatible_version(
+          subject: "foo",
+          data: {fooInt: 123, fooString: "xyz", fooLong: 99999, fooBoolean: true}
+        )
+      ).to eq(5)
+    end
+
+    it "raises an error if no compatible version can be found" do
+      expect { instance.find_compatible_version(subject: "quack", data: "x") }
+        .to raise_error(described_class::SubjectLookupError)
+
+      expect { instance.find_compatible_version(subject: "foo", data: "y") }
+        .to raise_error(described_class::SchemaNotFound)
+    end
+
+    it "accepts a custom schema_parser and validator" do
+      expect(
+        instance.find_compatible_version(
+          subject: "foo",
+          data: {findDoc: "Foo3"},
+          schema_parser: ->(string) { JSON.parse(string) },
+          validator: ->(schema, data) { schema["doc"] == data[:findDoc] }
+        )
+      ).to eq(3)
+    end
+  end
+
   describe "#preload" do
     let(:data_lists) do
       registry_data.map do |subject, data|
@@ -212,7 +361,7 @@ describe SchemaVersionCache do
       instance.preload(["foo", "bar"])
       registry_data.keys.each { |subject| registry_data.delete(subject) }
 
-      expect(instance.get_current_id(subject: "foo")).to eq(1002)
+      expect(instance.get_current_id(subject: "foo")).to eq(1003)
       expect(instance.get_current_id(subject: "bar")).to eq(2001)
       expect { instance.get_current_id(subject: "baz") }
         .to raise_error(described_class::SubjectLookupError)

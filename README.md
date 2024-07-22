@@ -49,6 +49,20 @@ schema_id = AvroSchemaVersionCache.get_current_id(subject:)
 version = AvroSchemaVersionCache.get_version_number(subject:, schema_id:)
 schema_json = AvroSchemaVersionCache.get_schema_json(subject:, version:)
 versions = AvroSchemaVersionCache.get_version_numbers(subject:)
+
+# Find compatible version using Avro parsing and validator:
+compatible_version = AvroSchemaVersionCache.find_compatible_version(
+  subject:,
+  data: {color: "red", bright: true}
+)
+
+# Find compatible version using custom parsing and validator:
+custom_compatible_version = AvroSchemaVersionCache.find_compatible_version(
+  subject:,
+  data: {color: "red", bright: true},
+  schema_parser: ->(string) { MySchemaParser.parse(string) },
+  validator: ->(schema, data) { MyValidator.valid?(schema, data) }
+)
 ```
 
 ## Development

@@ -1,5 +1,7 @@
 # typed: true
 
+require "avro"
+
 class SchemaVersionCache
   SchemaNotFound = Class.new(StandardError)
   SubjectLookupError = Class.new(StandardError)
@@ -67,7 +69,41 @@ class SchemaVersionCache
     @by_version.dig(subject, version)&.schema || schema_not_found(subject:, version:)
   end
 
+  def find_compatible_version(subject:, data:, schema_parser: nil, validator: nil)
+    version = newest_compatible_version(subject:, data:, schema_parser:, validator:)
+    return version if version
+
+    add_subject_to_cache(subject)
+    newest_compatible_version(subject:, data:, schema_parser:, validator:) ||
+      schema_not_found(subject:)
+  end
+
   private
+
+  def newest_compatible_version(subject:, data:, schema_parser:, validator:)
+    get_version_numbers(subject:).reverse.find do |version|
+      json = get_schema_json(subject:, version:)
+      schema = schema_parser ? schema_parser.call(json) : avro_parse(json)
+      validator ? validator.call(schema, data) : avro_valid?(schema, data)
+    end
+  end
+
+  def avro_parse(json)
+    ::Avro::Schema.parse(json)
+  end
+
+  def avro_valid?(schema, data)
+    ::Avro::SchemaValidator.validate!(
+      schema,
+      data,
+      recursive: true,
+      encoded: false,
+      fail_on_extra_fields: true
+    )
+    true
+  rescue Avro::SchemaValidator::ValidationError
+    false
+  end
 
   Entry = Struct.new(:subject, :version, :id, :schema, keyword_init: true)
 
