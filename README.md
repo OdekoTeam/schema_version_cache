@@ -8,7 +8,7 @@ Make Avro schema version queries fast and easy.
 
 Add to the application's Gemfile:
 ```ruby
-gem "schema_version_cache", source: "https://gem.odeko.com/"
+gem "schema_version_cache"
 ```
 
 ## Usage
@@ -35,8 +35,8 @@ Racecar.configure do |config|
   # ...
   AvroSchemaVersionCache.preload(
     [
-      "com.odeko.foo_service.Foo_value",
-      "com.odeko.bar_service.Bar_value"
+      "com.example.foo_service.Foo_value",
+      "com.example.bar_service.Bar_value"
     ]
   )
 end
@@ -44,7 +44,7 @@ end
 
 Run schema queries as needed:
 ```ruby
-subject = "com.odeko.foo_service.Foo_value"
+subject = "com.example.foo_service.Foo_value"
 schema_id = AvroSchemaVersionCache.get_current_id(subject:)
 version = AvroSchemaVersionCache.get_version_number(subject:, schema_id:)
 schema_json = AvroSchemaVersionCache.get_schema_json(subject:, version:)
