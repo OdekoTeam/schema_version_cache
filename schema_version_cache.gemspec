@@ -5,9 +5,9 @@ Gem::Specification.new do |s|
   s.description = "Schema version cache, e.g. for Avro schemas"
   s.authors = ["Odeko"]
   s.files = Dir.chdir(__dir__) do
-    Dir["README.md", "lib/**/*.rb", "rbi/**/*.rbi"]
+    Dir["LICENSE", "README.md", "lib/**/*.rb", "rbi/**/*.rbi"]
   end
-  s.license = "Nonstandard"
+  s.license = "Apache-2.0"
   s.add_dependency("avro", "~> 1.11")
   s.add_development_dependency("rake", "~> 13.0")
   s.add_development_dependency("rspec", "~> 3.0")
