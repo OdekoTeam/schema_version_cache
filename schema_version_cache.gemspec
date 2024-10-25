@@ -1,13 +1,15 @@
 Gem::Specification.new do |s|
   s.name = "schema_version_cache"
-  s.version = "1.2.1"
+  s.version = "1.3.0"
   s.summary = "Schema version cache"
   s.description = "Schema version cache, e.g. for Avro schemas"
-  s.authors = ["Odeko"]
+  s.homepage = "https://github.com/OdekoTeam/schema_version_cache"
+  s.authors = ["Odeko Developers"]
   s.files = Dir.chdir(__dir__) do
-    Dir["README.md", "lib/**/*.rb", "rbi/**/*.rbi"]
+    Dir["LICENSE", "README.md", "lib/**/*.rb", "rbi/**/*.rbi"]
   end
-  s.license = "Nonstandard"
+  s.license = "Apache-2.0"
+  s.required_ruby_version = ">= 3.1.0"
   s.add_dependency("avro", "~> 1.11")
   s.add_development_dependency("rake", "~> 13.0")
   s.add_development_dependency("rspec", "~> 3.0")
